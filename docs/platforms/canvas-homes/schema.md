@@ -1,0 +1,1 @@
+# Canvas Homes Platform Schema
