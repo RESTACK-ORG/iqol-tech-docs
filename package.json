@@ -1,11 +1,12 @@
 {
   "name": "iqol-service-group",
   "version": "1.0.0",
-  "description": "",
+  "description": "Centralized documentation service for IQOL platforms and microservices",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon index.js",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +14,8 @@
   "dependencies": {
     "express": "^5.1.0",
     "markdown-it": "^14.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }
