@@ -23,6 +23,18 @@ function getMicroservices(platform) {
   }
 }
 
+// Function to get workflows for a platform
+function getWorkflows(platform) {
+  const workflowsPath = path.join(__dirname, 'docs', 'platforms', platform, 'workflows');
+  try {
+    return fs.readdirSync(workflowsPath, { withFileTypes: true })
+      .filter(dirent => dirent.isFile() && dirent.name.endsWith('.md'))
+      .map(dirent => dirent.name.replace('.md', ''));
+  } catch (error) {
+    return [];
+  }
+}
+
 app.get('/', (req, res) => {
   const platformLinks = platforms.map(platform => {
     const displayName = platform.split('-').map(word => 
@@ -49,6 +61,8 @@ app.get('/', (req, res) => {
       </style>
     </head>
     <body>
+
+    
       <h1>IQOL's Tech Documentation</h1>
       <ul>
         ${platformLinks}
@@ -74,6 +88,7 @@ app.get('/platform/:platform', (req, res) => {
   ).join(' ');
   
   const microservices = getMicroservices(platform);
+  const workflows = getWorkflows(platform);
   
   res.send(`
     <!DOCTYPE html>
@@ -101,6 +116,18 @@ app.get('/platform/:platform', (req, res) => {
       <ul>
         <li><a href="/docs/${platform}/schema">View Platform Schema</a></li>
       </ul>
+      
+      ${workflows.length > 0 ? `
+        <h2>Workflows</h2>
+        <ul>
+          ${workflows.map(workflow => `
+            <li><a href="/docs/${platform}/workflows/${workflow}">${workflow.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</a></li>
+          `).join('')}
+        </ul>
+      ` : `
+        <h2>Workflows</h2>
+        <p>No workflow documentation available for this platform yet.</p>
+      `}
       
       ${microservices.length > 0 ? `
         <h2>Microservices</h2>
@@ -169,6 +196,51 @@ app.get('/docs/:platform/schema/raw', (req, res) => {
     res.send(markdownContent);
   } catch (error) {
     res.status(500).json({ error: 'Failed to read schema file' });
+  }
+});
+
+app.get('/docs/:platform/workflows/:workflow', (req, res) => {
+  const { platform, workflow } = req.params;
+  
+  if (!platforms.includes(platform)) {
+    return res.status(404).json({ error: 'Platform not found' });
+  }
+  
+  const workflowPath = path.join(__dirname, 'docs', 'platforms', platform, 'workflows', `${workflow}.md`);
+  
+  try {
+    const markdownContent = fs.readFileSync(workflowPath, 'utf8');
+    const htmlContent = md.render(markdownContent);
+    
+    const displayName = platform.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+    
+    const workflowDisplayName = workflow.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+    
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${workflowDisplayName} - ${displayName}</title>
+        <link rel="stylesheet" href="/css/schema.css">
+      </head>
+      <body>
+        <div style="margin-bottom: 20px;">
+          <a href="/">← All Platforms</a> | 
+          <a href="/platform/${platform}">← ${displayName} Platform</a> |
+          <a href="/docs/${platform}/schema">Platform Schema</a>
+        </div>
+        ${htmlContent}
+        <hr>
+        <p><a href="/platform/${platform}">← Back to ${displayName} Platform</a></p>
+      </body>
+      </html>
+    `);
+  } catch (error) {
+    res.status(404).json({ error: 'Workflow documentation not found' });
   }
 });
 
