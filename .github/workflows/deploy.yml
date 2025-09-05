@@ -51,7 +51,7 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ secrets.DEPLOY_GAE_SA }}
+          project_id: iqol-crm
       
       - name: Deploy to App Engine
         run: gcloud app deploy --quiet
